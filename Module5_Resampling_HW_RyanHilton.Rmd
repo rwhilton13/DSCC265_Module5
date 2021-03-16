@@ -232,7 +232,7 @@ Overall, this sampling method is commonly used as a means of obtaining a represe
 ***
 
 ## Metropolis-Hastings Method:
-Like Gibbs sampling, the Metropolis-Hastings method is another method derived from the MCMC method and is actually the most popular derivation of MCMC. The goal is to again sample from some not fully known distribution p(x). In this case, we know some function f(x) such that $p(x) = \frac{f(x)}{NC}$ where NC is a normalizing constant. Basically, for Metropolis-Hastings, we roughly know the shape of our target distribution p(x).
+Like Gibbs sampling, the Metropolis-Hastings method is another method derived from the MCMC method and is actually the most popular derivation of MCMC. The goal is to again sample from some not fully known distribution p(x). In this case, we know some function f(x) such that $p(x) = \frac{f(x)}{NC}$ where NC is a normalizing constant. Basically, for Metropolis-Hastings, we roughly know the shape of our target distribution p(x). To be continued...
 
 
 ***
