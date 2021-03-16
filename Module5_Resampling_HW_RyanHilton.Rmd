@@ -1,0 +1,249 @@
+---
+title: "Module 5 Resampling Assignment"
+author: "Ryan Hilton // Undergraduate Student"
+date: "March 17th, 2021"
+#output: pdf_document
+output:
+  pdf_document: default
+  df_print: paged
+  #html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, tidy=TRUE, tidy.opts=list(width.cutoff=80))
+```
+
+***
+
+**Read and Delete This Part When Typing**
+
+- Give a name to this rmd file as instructed in the previous assignments
+- First review the notes and the lab codes. Do the assignment, type the solution here. Knit (generate the pdf) the file. Check if it looks good.
+- You will then submit two files to Blackboard: pdf and rmd
+- Always include your comments on results: don't just leave the numbers without explanations. Use full sentences, structured paragraphs if needed, correct grammar, and proofreading.
+- Show your knowledge with detailed work in consistency with course materials. 
+- Don't include irrelevant and uncommented outputs.
+- You will have only three questions since you deserved a break from midterm test and lengthy assignments so far: Each question is 6 pt (if question has parts, each is 2 pt). Baseline is 2 pt.
+- If the response is not full or not reflecting the correct answer as expected, you may still earn 50% or just get 0. Your TA will grade your work. Any questions, you can write directly to your TA and cc me. 
+- Each BONUS is 1 pt, the total BONUS is not more than 2.
+- One of the office hours are adjusted to meet oversea students: Tue from 10am to 11am. No change in the other days: Wed and Thursday are 12:30pm to 2pm.
+- Use `set.seed(99)` before random generation every time (or, set up it in the setting). You can use R's `boot()` and `boot.ci()` or design your own boot routines. Include the code, don't include uncommented outputs.
+
+***
+
+\newpage{}
+
+
+***
+## Module Assignment Questions
+## Q1) (*Random Variable Generation*) 
+
+You have learned how to generate exponential random variables using uniform distribution. Now, you will generate normal random variables using one of the methods described in this [LINK](http://interstat.statjournals.net/YEAR/2012/articles/1205003.pdf).
+
+a. As we studied the exponential random variable in the lab session, generate a 1000 standard normal distribution using the method you chose in the link.
+
+b. Check if this generation is verified with the theory: 1) check if the characteristics (so calculate mean, sd, skewness, kurtosis for each) of empirical and theoretical distributions are similar; 2) plot a QQ and judge by eye; and 3) make a chi-squared test on empirical and theoretical buckets.
+
+c. Write an overall comment on your experience.
+
+
+***
+## Q2) (*Bootstrapping*) 
+
+Let $\hat{\sigma}^2_1$  and $\hat{\sigma}^2_2$ represent the variance estimates of two independent random samples of size 10 and 20, respectively, taken from any normal distributions with variances $\sigma^2_1=12$ and $\sigma^2_2=8$ , respectively. Let a new parameter be defined as $v= \frac{\sigma^2_1}{\sigma^2_2}$. 
+
+Based on randomly generated samples with any choice on means, use bootstrap method (B=1000) to answer each part below: 
+
+a. Estimate $\sigma^2_1$ along with the standard error on the estimate. Evaluate if this misses the true value.
+
+b. Estimate the parameter $v$ along with the standard error on the estimate. Evaluate if this misses the true value.
+
+c. Obtain the percentile-based 95% confidence interval on the $v$ estimate. 
+
+d. (BONUS) Search for what theory says about the CI on the $\sigma^2$ and $v$ estimates. Verify if the result in part c convinces the theory.
+
+e. (BONUS) Can bootstrapping method solve the probability problem, $P(\frac{\hat{\sigma}^2_1}{\hat{\sigma}^2_2}>2)$? Calculate and show. Does it give similar result from the theory?
+
+	
+***
+## Q3) (*Advanced Sampling*) 
+
+Watch [`the playlist`](https://youtube.com/playlist?list=PLTpORyMWYJsa-bLjJqzsJKXQCrMAiYu7n) on Hidden Markov, MC, MCMC, Gibbs, Metropolis-Hastings methods (or, use this link <https://youtube.com/playlist?list=PLTpORyMWYJsa-bLjJqzsJKXQCrMAiYu7n>)
+
+Write one paragraph summary for each MCMC, Gibbs and Metropolis-Hastings method by highlighting how the strategy works (watch six videos, write three paragraphs).
+
+- (BONUS) Give an example from `Deep Learning` if any of them is employed.
+
+
+\newpage
+
+***
+
+
+## Your Solutions
+
+Q1) 
+
+Part a.
+
+***
+
+Part b.
+
+***
+
+Part c.
+
+***
+
+
+***
+\newpage
+
+Q2) 
+
+```{r}
+library(boot)
+```
+
+```{r}
+set.seed(1)
+x1 = rnorm(10, 0, sqrt(12))
+x2 = rnorm(20, 0, sqrt(8))
+```
+
+```{r}
+cat(mean(x1),sd(x1))
+cat(mean(x2),sd(x2))
+```
+
+```{r}
+hist(x2, xlim = c(-10,10), col = "skyblue", main = "Histogram of Both Random Samples")
+hist(x1, add = T, col = scales::alpha("red",0.5))
+legend("topright", c("x2 (sd=8)", "x1 (sd=12)"), col=c("skyblue", "red"), lwd=10)
+```
+
+Part a.
+```{r}
+x2 = as.matrix(x2)
+x1 = as.matrix(x1)
+sdFunction <- function(data, indices) {
+  d <- data[indices,]
+  return(sd(d)^2)
+}
+results <- boot(x1, statistic = sdFunction, R = 1000)
+results
+results1 <- boot(x2, statistic = sdFunction, R = 1000)
+results1
+```
+
+```{r}
+plot(results)
+plot(results1)
+```
+
+```{r}
+v <- results$t0 / results1$t0
+v
+```
+
+```{r}
+x1
+x2
+```
+
+```{r}
+# v.estimate = results$t0 / results1$t0
+# v.estimate
+
+v.estimate <- function(data, data1, indices, indices1){
+  d2 <- data[indices,] #indices is between 1:20
+  d1 <- data1[indices1,] #indices1 is between 1:10
+  return((sd(d1)^2)/(sd(d2)^2))
+}
+
+results.b <- boot(data = x2 , statistic = v.estimate, R = 1000, data1 = x1)
+results.b
+```
+```{r}
+plot(results.b)
+```
+
+```{r}
+boot.ci(results.b, type = "bca")
+```
+
+***
+
+Part b.
+
+***
+
+Part c.
+
+***
+
+
+***
+\newpage
+
+
+Q3) 
+
+## Markov Chain Monte Carlo (MCMC) Method:
+
+The MCMC method is a very popular method that is used primarily for creating samples from continuous random variables that can be used to gain information from multi-dimensional models. The general summary of the MCMC method is as follows: We start with some sampling distribution $x_0$. We want to pick new samples $x_i$ such that the $x_i$ sample is based off of the $x_{i-1}$ sample. This means that our samples that we collect won't be independent of one another which has its pro's and cons. This idea of using the information from a previous state/distribution for your current state/distribution is known as a Markov Chain. One important part of the MCMC method that is a crucial part of a Markov Chain is the idea of a stationary distribution. In a Markov Chain, if you reach a stationary distribution, you will stay at the distribution forever. This has incredible properties for when we want to sample the stationary distribution. Let's say some p(x) is our target distribution, or something weirdly distributed that we want to sample from. Because of the stationary distribution property for Markov Chains, we can say we want p(x) to be our Markov Chain's stationary distribution so we can repeatedly sample from it. We can say the first instance of our stationary distribution in our Markov Chain can be $x_p$. Our Markov Chain can be the following: $$x_0 -> x_1 -> x_2 -> ... -> x_p -> x_{p+1} -> x_{p+2}$$ 
+The first $x_{p-1}$ distributions are what we would call burn in samples which are just there in order to get a more representative distribution of p(x). Once we reach $x_p$, $x_p$ and all future distributions in the Markov Chain will be as if we sampled from our target distribution p(x) and we can disregard $x_{p-1}$ samples. 
+
+Math go brr here. (transition probability and detailed balance). We can model transitions in our Markov Chain with some transition probabilities $T(x_i|x_{i-1})$.
+
+Overall, the MCMC method is efficient at obtaining the not fully known target distribution p(x), but at the cost of its samples being correlated. The MCMC is much better at dealing with target distributions that have irregular shapes or have high dimensionality than other methods like Accept-Reject.
+
+***
+
+## Gibbs Method:
+
+The Gibbs Sampling method is a MCMC algorithm that is useful in the case where we have two or more dimensions for the distribution we're trying to sample from. More specifically Gibbs method obtains a sequence/chain of observations which are approximate observations from some difficult to sample target distribution p(x,y). How does Gibbs method do this? To start, I'll mention that whenever you are working with multi-dimensional distributions, there are always subsets of the multi-dimensional distributions called conditional distributions. These conditional distributions are obtainable by fixing one variable to some value and obtaining the values of the other variables. Mathematically, this can be represented in a two dimensional problem as p(x|y) if we wanted the conditional distribution of x given some y or p(y|x) if we wanted the conditional distribution of y given x. These conditional distributions are much easier to sample from than the general p(x,y) target distribution and so Gibbs uses this useful property to obtain sample observations of p(x,y). For ease, we can model these conditional probability distributions as follows: $$p(x|y) = N(\rho*y, 1 - \rho^2) \quad \quad \textrm{and} \quad \quad p(y|x) = N(\rho*x, 1 - \rho^2) \quad \quad \textrm{s.t.} \quad \quad \rho = cor(x,y)$$
+Using these conditional probability distributions, we can continue to the sampling method. The Gibbs sampling procedure is 4 steps: First step is to start at some observation $(x^{(0)}, y^{(0)})$. Second step is obtain a x value $x^{(1)}$ that is from $p(x^{(1)} | y^{(0)})=N(\rho*y^{(0)}, 1 - \rho^2)$. Third step is obtain a y value $y^{(1)}$ that is from $p(y^{(1)} | x^{(1)})=N(\rho*x^{(1)}, 1 - \rho^2)$. Step 4 is just to repeat steps 2 and 3 as many times as you want until you have a reasonably sized estimated sampling distribution of p(x,y). Because this method uses a Markov Chain of observations, its usually best to get rid of some of the earlier observations because they are less likely to represent likely observations from the p(x,y) distribution. These steps can be visually understood by the following plot:
+
+```{r, echo=FALSE}
+x.s <- c(0,-1,-1,1)
+y.s <- c(1,1,-1,-1)
+Gibbs.data <- matrix(c(x.s,y.s), ncol = 2)
+colnames(Gibbs.data) = c("x","y")
+
+plot(Gibbs.data, xlim=c(-2,2),ylim=c(-2,2))
+
+text(x.s[1],y.s[1], labels="(x_0,y_0)",pos=4)
+text(x.s[2],y.s[2], labels="(x_1,y_0)",pos=2)
+text(x.s[3],y.s[3], labels="(x_1,y_1)",pos=1)
+text(x.s[4],y.s[4], labels="(x_2,y_1)",pos=4)
+
+#abline(v=0)
+#abline(h=0)
+
+arrows(x.s[1],y.s[1], x.s[2], y.s[2])
+arrows(x.s[2],y.s[2], x.s[3], y.s[3])
+arrows(x.s[3], y.s[3], x.s[4], y.s[4])
+```
+
+Overall, this sampling method is commonly used as a means of obtaining a representative sample from some difficult to sample target distribution $p(x,y)$ by sampling from its conditional probability distributions ($p(x|y)$ and $p(y|x)$), changing one variable value in each iteration, and representing the newly sampled partial observations with a Markov Chain. 
+
+***
+
+## Metropolis-Hastings Method:
+Like Gibbs sampling, the Metropolis-Hastings method is another method derived from the MCMC method and is actually the most popular derivation of MCMC. The goal is to again sample from some not fully known distribution p(x). In this case, we know some function f(x) such that $p(x) = \frac{f(x)}{NC}$ where NC is a normalizing constant. Basically, for Metropolis-Hastings, we roughly know the shape of our target distribution p(x).
+
+
+***
+\newpage
+
+### Write comments, questions: ...
+
+
+***
+### Disclose the resources or persons if you get any help: ...
+
+### How long did the assignment solutions take?: ...
+
+## References: ...

@@ -1,0 +1,337 @@
+---
+title: "LabCode"
+author: "Ryan Hilton"
+date: "3/14/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Lab Session on Module 5 - Resampling
+
+## install packs first
+```{r}
+install.packages("...") #high quality graphs
+```
+
+
+######A.Random Number and Value Generating
+#The function r...() simulates a (pseudo-) random sample of ... random variables of given parameters
+#For example, five mean and standard deviation, rnorm(n=..,mean=..,sd=..) will generate 5 observations
+```{r}
+rnorm(5,mean=67,sd=9)
+```
+
+#try ?rnorm, ?rexp, and click on Distributions to see what available
+```{r}
+?rnorm
+?rexp
+
+#run and click on .Random.seed and read
+?runif
+```
+
+#let's skip how to generate a value from seed
+#you are encouraged to read currently available RNG kinds in R from Random Number Generation
+#run ?runif and click there RNG about random number generation in R.
+
+
+#now, let's generate a random value from U(0,1)
+```{r}
+set.seed(99)
+runif(n=1, min=0, max=1)
+```
+
+#get 1000 r.v.s from U(0,1) and plot the histogram and curve
+#see this is empirical dist
+```{r}
+set.seed(99)
+unif_rv=runif(n=1000, min=0, max=1)
+hist(unif_rv)
+
+hist(unif_rv, prob=TRUE)
+curve(dunif(x, 0,1), add=TRUE, col='red')
+```
+
+
+
+#now, let's generate a random value from Exp(rate=lambda) in lambda*e^(-lambda*x), x>=0
+```{r}
+lambda=1
+set.seed(99)
+rexp(n=1, rate=lambda)
+```
+
+#get 1000 and plot the =histogram and curve
+```{r}
+lambda=1
+set.seed(99)
+exp_rv=rexp(n=1000, rate=lambda)
+hist(exp_rv, nclass=15)
+
+hist(exp_rv, prob=TRUE)
+curve(dexp(x, rate=1), add=TRUE, col='red')
+```
+
+#now, we will use the random value generator for Exp(lambda) from the lecture notes
+# - ln(U)/lambda ~ Exp(lambda)
+```{r}
+lambda=1
+set.seed(99)
+u = runif(n=1, min=0, max=1)
+-log(u)/lambda
+
+set.seed(99)
+u = runif(n=1000, min=0, max=1)
+exp_rv_from_u = -log(u)/lambda
+hist(exp_rv_from_u, nclass=15)
+
+hist(exp_rv_from_u, prob=TRUE)
+curve(dexp(x, rate=1), add=TRUE, col='blue')
+```
+
+##Next, check if this generated values are verified with three ways: Let's do.
+#1. Check the mean is it is E(X)=lambda
+```{r}
+mean(exp_rv_from_u)
+```
+
+#check with lambda
+```{r}
+sd(exp_rv_from_u)
+```
+
+#check with 1/lambda
+
+
+#2. Get Q-Q plot to see the linear pattern
+```{r}
+qqplot(exp_rv_from_u, exp_rv)
+abline(0,1)
+```
+
+#3. Use goodness-of-fit test on the buckets from generated exponential rvs from U(0,1) vs. 
+#theoretical or empirical buckets in histogram (use 15 buckets).
+```{r}
+chisq.test(hist(exp_rv, nclass  = 15)$count, hist(exp_rv_from_u, nclass = 15)$count)
+```
+
+###Now, your turn:
+#change lambda to 10, and see the results above using our exp generator derived in the class.
+#check plots, kdes, mean, sd, qqplot, chisq test results
+
+
+######B.Bootstrapping
+```{r}
+library(boot)
+```
+
+# The Bootstrap
+#R's boot() function, which is part of the boot library,
+#performs the bootstrap by repeatedly sampling observations from the data set with replacement.
+```{r}
+?boot
+```
+
+#don't run
+#boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
+#     strata = rep(1,n), L = NULL, m = 0, weights = NULL,
+#     ran.gen = function(d, p) d, mle = NULL, simple = FALSE, ...,
+#     parallel = c("no", "multicore", "snow"),
+#     ncpus = getOption("boot.ncpus", 1L), cl = NULL)
+
+#The boot( ) function can generate both nonparametric and parametric resampling. 
+#For the nonparametric bootstrap, resampling methods include ordinary, balanced, antithetic and permutation. 
+#For the nonparametric bootstrap, stratified resampling is supported. 
+#Importance resampling weights can also be specified.
+
+
+### Example 1
+#The following example generates the bootstrapped 95% confidence interval 
+#for R-squared in the linear regression of miles per gallon (mpg) on car weight (wt)
+#and displacement (disp). The data source is mtcars. 
+#The bootstrapped confidence interval is based on 1000 replications.
+
+# function to obtain R-Squared from the data
+```{r}
+rsq <- function(formula, data, indices) {
+  d <- data[indices,] # allows boot to select sample
+  fit <- lm(formula, data=d)
+  return(summary(fit)$r.square)
+}
+```
+
+# bootstrapping with 1000 replications
+```{r}
+results <- boot(data=mtcars, statistic=rsq, R=1000, formula=mpg~wt+disp)
+#view results
+results
+```
+
+#     original     bias    std. error
+#t1* 0.7809306 0.01217859  0.04713662
+```{r}
+plot(results)
+```
+
+# Bootstrap 95% CI for R-Squared using many ci methods:
+# get 95% confidence interval
+# The boot.ci( ) function takes a boot object and generates 5 different types of 
+#two-sided nonparametric confidence intervals. 
+#These include the first order normal approximation, the basic bootstrap interval, 
+#the studentized bootstrap interval, the bootstrap percentile interval, and 
+#the adjusted bootstrap percentile (BCa) interval.
+
+```{r}
+?boot.ci
+boot.ci(results, type="bca")
+```
+
+#Wanna know more:
+
+#In example above, the function rsq returned a number and boot.ci returned a single confidence interval. The statistics function you provide can also return a vector. 
+#Visit https://www.statmethods.net/advstats/bootstrapping.html and get more yourself
+
+#Visit and read the pdf: check some functions, including boot and ci
+#https://cran.r-project.org/web/packages/boot/
+
+
+
+### Example 2.
+```{r}
+library(ISLR)
+```
+
+
+#lm with OLS, one time
+```{r}
+lm.fit=lm(mpg~horsepower,data=Auto,subset=1:392)
+summary(lm.fit)
+summary(lm(mpg~horsepower,data=Auto))$coef
+```
+
+#see (est,se)'s are: 
+#intercept:(39.935861,0.717499) and slope:(-0.157845,0.006446) using theory/ols
+#can we use bootstrapping method to get se's? 
+
+# Estimating the Accuracy of a Linear Regression Model
+# let's write our function that gives coefficient estimates
+```{r}
+boot.fn=function(data,index)
+  return(coef(lm(mpg~horsepower,data=data,subset=index)))
+```
+
+#see it working
+```{r}
+boot.fn(Auto,1:392)
+```
+
+#now, randomly choose 392 obs w/t repl and run twice: see the variations
+```{r}
+set.seed(1)
+boot.fn(Auto,sample(392,392,replace=T))
+boot.fn(Auto,sample(392,392,replace=T))
+```
+
+##can we get the standard errors on coefficient estimates using bootstrap sampling?
+#we would repeat this process, store the coeffs and calculate the st dev of sampling distribution of estimates
+#you can do it in long way
+```{r}
+B=1000
+strg = t(matrix(0, nrow=2, ncol=B))
+for (i in 1:B){
+  strg[i,]=boot.fn(Auto,sample(392,392,replace=T))
+}
+```
+
+#bootstraped mean
+```{r}
+apply(strg, 2, mean)
+```
+
+#bootstrapped se using st dev of sampling dist
+```{r}
+apply(strg, 2, sd)
+```
+
+#compare with intercept:(39.935861,0.717499) and slope:(-0.157845,0.006446) using theory/ols
+#close?
+
+#you can use percentile of the sampling dist to get the CI on the estimates
+#try and get 95% CI using percentile on slope estimate?
+
+####let's use shortcut: boot() and boot.ci()
+
+
+```{r}
+set.seed(99)
+results = boot(Auto,statistic = boot.fn, R=B)
+results
+```
+
+#Bootstrap Statistics :
+#     original        bias    std. error
+#t1*  39.9358610  0.0259739142 0.860974607
+#t2* -0.1578447 -0.0001885048 0.007476933
+
+#plot of bootstrapped sampling distributions
+```{r}
+plot(results, index=1) # intercept
+plot(results, index=2) # wt
+```
+
+#now, let's get CI's on intercept: results is boot.out
+```{r}
+boot.ci(results, conf = 0.95, type="bca", index=1) #95%   (38.29, 41.75 )  on intercept
+
+boot.ci(results, conf = 0.95, type="bca", index=2) #95%  (-0.1717, -0.1434 ) on slope
+```
+
+#help(boot.ci)
+
+#change the fit function and rerun the above: compare the accuracy and efficiency
+```{r}
+boot.fn=function(data,index)
+  coefficients(lm(mpg~horsepower+I(horsepower^2),data=data,subset=index))
+```
+
+## Practice with complex models and get CI's on estimates (statistics you want such as MSE, Cp etc)
+
+
+
+#####Extras foor plot
+#how to plot qqplot and qqline
+```{r}
+set.seed(1)          # for reproducibility 
+Z <- rexp(1000)      # random sample from exponential distribution
+p <- ppoints(100)    # 100 equally spaced points on (0,1), excluding endpoints
+q <- quantile(Z,p=p) # percentiles of the sample distribution
+plot(qexp(p) ,q, main="Exponential Q-Q Plot",
+     xlab="Theoretical Quantiles",ylab="Sample Quantiles")
+qqline(q, distribution=qexp,col="blue", lty=2)
+```
+
+#kde: plot two kdes on the same plot
+```{r}
+X <- c(rep(65, times=5), rep(25, times=5), rep(35, times=10), rep(45, times=4))
+hist(X, prob=TRUE, col="grey")# prob=TRUE for probabilities not counts
+lines(density(X), col="blue", lwd=2) # add a density estimate with defaults
+lines(density(X, adjust=2), lty="dotted", col="darkgreen", lwd=2) 
+```
+
+#kde2
+```{r}
+foo <- rnorm(100, mean=1, sd=2)
+hist(foo, prob=TRUE)
+curve(dnorm(x, mean=mean(foo), sd=sd(foo)), add=TRUE)
+```
+
+
+
+
+
+
+
+
