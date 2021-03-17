@@ -84,18 +84,70 @@ Write one paragraph summary for each MCMC, Gibbs and Metropolis-Hastings method 
 
 Q1) 
 
+```{r}
+library(e1071)
+```
+
 Part a.
+
+```{r}
+##Method 1: Sum of Uniform Random Variables
+Z = c()
+set.seed(99)
+for (i in c(1:1000)) {
+  U = runif(12,0,1) #generate 12 variables in U~Unif(0,1)
+  Z = append(Z, sum(U)-6) #sum over the 12 uniform variables and subtract 6, then append to Z
+}
+hist(Z) #distribution of Z
+```
+In order to sample 1000 random variables that are normally distributed, we used method 1, an application of the central limit theorem, described in the link provided. This method, while it may be one of the most costly provided, makes a lot of intuitive sense and was very feasible for the size of problem we have. This generates 12 uniformly distributed numbers on (0,1), sums them, and subtracts 6 for each normally distributed number. As seen in the histogram, the distribution looks normal, but we will evaluate that further in parts b and c.
 
 ***
 
 Part b.
 
+```{r}
+set.seed(99)
+Z_theoretical = rnorm(1000)
+#hist(Z_theoretical) # theoretical normal distribution using rnorm
+
+##output all measures
+cat("The mean of the empirical distribution is",mean(Z),"and the mean of the theoretical distribution is",mean(Z_theoretical),"\n\n")
+cat("The sd of the empirical distribution is",sd(Z),"and the sd of the theoretical distribution is",sd(Z_theoretical),"\n\n")
+cat("The skewness of the empirical distribution is",skewness(Z),"and the skewness of the theoretical distribution is",skewness(Z_theoretical),"\n\n")
+cat("The kurtosis of the empirical distribution is",kurtosis(Z),"and the kurtosis of the theoretical distribution is",kurtosis(Z_theoretical))
+```
+For our empirical distribution computed in part a, we see a mean very close to 0, sd close to 1, and skewness and kurtosis both close to 0, all as we would hope for. In comparison to the theoretical distribution computed with the rnorm function, these values are almost all better, besides the skewness.
+
+```{r}
+## QQ plot for empirical distribution
+qqnorm(Z, pch = 1)
+qqline(Z)
+```
+The normal qq plot on our empirical distribution looks very promising as the majority of points lie relatively on or close to the line. This indicates that our distribution is approximately normal.
+
+```{r}
+## Chi-Squared Test
+bins = seq(-4, 4, by=.5)
+bins
+length(bins)
+
+hist1=hist(Z_theoretical, freq=TRUE, breaks=bins)$counts + 1 #+1 to adjust zero issue
+hist1
+hist2=hist(Z, freq=TRUE, breaks=bins)$counts + 1 #adjust
+hist2
+
+#testing
+#df is bins-1: ts=(sum(hist2-hist1)^2/(hist1)), p-value=1-P(X<ts) using chi-sq dist
+chisq.test(hist2, p=hist1, rescale.p = TRUE)
+```
+This result is probably the strangest of this question, because our empirical distribution had been showing many signs of being normal until we find in this question that the bins are believed to be different from those in the theoretical distribution. However, we believe that this is more a commentary on the faults of rnorm to approximate a normal distribution in only 1000 samples because the mean and sd for the theoretical distribution were further from 0 and 1 than those of the empirical distribution.
+
 ***
 
 Part c.
 
-***
-
+To repeat what has been said already, our empirical distribution provided excellent results in terms of mean, sd, skewness, and kurtosis, resembled a normal distribution in the qq plot, and most interestingly we were able to reject the null hypothesis in our chi-squared test. When it pertains to the mean, sd, skewness, and kurtosis, our theoretical distribution showed worse numbers (mean and kurtosis farther from 0, sd farther from 1) in all except the skewness, which raises the question of whether our empirical distribution is more normal than our qnorm created distribution. This isn't to say qnorm doesn't work because we must remember that this is working with only 1000 points and the sample is random, so with any given seed it is possible the roles are reversed here. However, since we noticed in our chi-squared test that the distribution of the bins is not equal, I think our best conclusion, based on the qq plot and our metrics, is that the empirical distribution is more normal than the theoretical distribution.
 
 ***
 \newpage
